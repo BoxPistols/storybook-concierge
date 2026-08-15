@@ -78,6 +78,7 @@ export const ChatSupport = ({ currentStory }: ChatSupportProps) => {
     handleSend,
     handleSuggestionClick,
     hasUserMessages,
+    aiUnavailable,
   } = useChatMessage({ currentStory, messages, setMessages, config })
 
   // handleSend のクロージャ（message / setMessage を束縛）
@@ -175,7 +176,7 @@ export const ChatSupport = ({ currentStory }: ChatSupportProps) => {
             message={message}
             isTyping={isTyping}
             submitShortcutLabel={submitShortcutLabel}
-            aiAvailable={!!config.apiKey || isBackendMode()}
+            aiAvailable={!aiUnavailable && (!!config.apiKey || isBackendMode())}
             inputRef={inputRef}
             onMessageChange={setMessage}
             onKeyDown={(e) => handleKeyDown(e, onSend)}

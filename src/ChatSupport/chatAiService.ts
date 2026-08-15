@@ -59,6 +59,20 @@ export class AIQuotaError extends Error {
   }
 }
 
+/**
+ * サーバー側に共有キーが設定されていない。
+ *
+ * これは**利用者から見れば障害ではなく構成**（キー無しで公開している
+ * デモがこの状態）。生の 'Server API key not configured' を見せると
+ * 壊れているように見えるので、専用の型にして呼び出し側で扱いを分ける
+ */
+export class AIServerKeyMissingError extends Error {
+  constructor() {
+    super('サーバーに共有APIキーが設定されていません')
+    this.name = 'AIServerKeyMissingError'
+  }
+}
+
 export class AIUserKeyRequiredError extends Error {
   constructor() {
     super(
@@ -150,6 +164,10 @@ const callViaBackend = async (
   if (!response.ok) {
     const data = (await response.json().catch(() => ({}))) as {
       error?: string
+      code?: string
+    }
+    if (data.code === 'SERVER_KEY_MISSING') {
+      throw new AIServerKeyMissingError()
     }
     throw new Error(data.error || `HTTP ${response.status}`)
   }
@@ -219,7 +237,8 @@ export const callAI = async (
     // 構造化エラーはそのまま再スロー（UI 側で型分岐するため）
     if (
       error instanceof AIQuotaError ||
-      error instanceof AIUserKeyRequiredError
+      error instanceof AIUserKeyRequiredError ||
+      error instanceof AIServerKeyMissingError
     ) {
       throw error
     }

@@ -7,7 +7,12 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 
-import { callAI, extractContent, isBackendMode } from '../chatAiService'
+import {
+  AIServerKeyMissingError,
+  callAI,
+  extractContent,
+  isBackendMode,
+} from '../chatAiService'
 import { DEFAULT_API_KEY, SYSTEM_PROMPT } from '../chatSupportConstants'
 import {
   consumeUse,
@@ -46,6 +51,12 @@ export const useChatMessage = ({
   config,
 }: UseChatMessageProps) => {
   const [isTyping, setIsTyping] = useState(false)
+  /**
+   * バックエンドに共有キーが無いことが分かった状態。
+   * 一度分かれば入力欄の表示も FAQ モードへ戻す（AI が使える体の
+   * プレースホルダを出したまま毎回失敗するのを避ける）
+   */
+  const [aiUnavailable, setAiUnavailable] = useState(false)
 
   // 現在のページのガイド情報
   const storyGuide: StoryGuideEntry | null = useMemo(
@@ -320,6 +331,11 @@ export const useChatMessage = ({
         const data = await callAI(config, payload)
         addBotMessage(extractContent(data))
       } catch (error: unknown) {
+        // サーバーにキーが無いのは障害ではなく構成。
+        // 生のエラー文言を出すと、キー無しで公開しているデモが
+        // 壊れているように見える
+        const serverKeyMissing = error instanceof AIServerKeyMissingError
+        if (serverKeyMissing) setAiUnavailable(true)
         const errMsg =
           error instanceof Error
             ? error.name === 'AbortError'
@@ -335,10 +351,13 @@ export const useChatMessage = ({
           userText,
           findSemanticFaqAnswer(embeddingFaq)
         )
+        const notice = serverKeyMissing
+          ? 'このデモは AI キーを設定していないため、ローカルの知識ベースから回答します。設定パネルで自分のキーを入れると AI 回答に切り替わります。'
+          : `AI接続エラー: ${errMsg}`
         if (offline) {
-          addBotMessage(`*AI接続エラー: ${errMsg}*\n\n---\n\n${offline}`)
+          addBotMessage(`*${notice}*\n\n---\n\n${offline}`)
         } else {
-          addBotMessage(`エラー: ${errMsg}`)
+          addBotMessage(notice)
         }
       } finally {
         setIsTyping(false)
@@ -437,6 +456,7 @@ export const useChatMessage = ({
     buildPageContextAnswer,
     handleDownload,
     handleSend,
+    aiUnavailable,
     handleSuggestionClick,
     hasUserMessages,
     INITIAL_GREETING,
