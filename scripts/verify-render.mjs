@@ -94,17 +94,29 @@ await input.press('Enter')
 await page.waitForTimeout(3000)
 const after = await messages.innerText()
 
+const added = after.slice(before)
+
+// 「増えたか」だけでは足りない。汎用 FAQ が返っても増えるので緑になる。
+// 「タイトルを含むか」でも足りない: FAQ の本文に
+// 「Components/Button・Card・Alert」のような一覧があり、そこに引っかかる。
+// 実際この 2 段階の緩い検査が、AI 失敗時にページ説明を飛ばして FAQ へ
+// 直行するバグを見逃していた（本番のスクリーンショットで気づいた）。
+//
+// ページ文脈の回答は「**<title>** > <name>」で始まる。そこまで見る
+// 文字数で差分を取ると境界がずれる（単語の途中から始まる）ので、
+// 全文に見出しが含まれるかで見る
+const expected = `${target.title} > ${target.name}`
 if (after.length <= before) {
-  ng('キー無し応答', '送信してもメッセージ領域が増えない')
-} else if (
-  /APIキーを設定|API キーを設定|接続に失敗/.test(after.slice(before))
-) {
+  ng('ページ文脈の応答', '送信してもメッセージ領域が増えない')
+} else if (/APIキーを設定|API キーを設定|接続に失敗/.test(added)) {
+  ng('ページ文脈の応答', 'AI 未設定を理由に断られている')
+} else if (!after.includes(expected)) {
   ng(
-    'キー無し応答',
-    'AI 未設定を理由に断られている（FAQ フォールバックが効いていない）'
+    'ページ文脈の応答',
+    `"${expected}" を含まない。汎用 FAQ に落ちている: ${added.slice(0, 90).replace(/\s+/g, ' ')}`
   )
 } else {
-  ok('キー無しで応答が返る（FAQ / storyGuide フォールバック）')
+  ok(`ページ文脈の応答が返る（"${expected}"）`)
 }
 
 await browser.close()

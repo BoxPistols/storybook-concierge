@@ -188,18 +188,32 @@ export const useChatMessage = ({
   const trimFaqAnswer = (text: string): string =>
     text.replace(/\n+## やるべきこと[\s\S]*$/, '').trimEnd()
 
-  const respondWithFaq = useCallback(
-    (query: string) => {
+  /**
+   * AI を使わずに返せる最良の回答を選ぶ。
+   *
+   * 優先順位は「今見ているページの説明 → FAQ」。この順序は
+   * **AI が失敗したときの経路でも同じでなければならない**。
+   * 以前は失敗時だけ FAQ に直行しており、キー未設定のデモで
+   * 「この画面なに？」に汎用 FAQ が返っていた（看板機能が、それが
+   * 最も要る場面で効いていなかった）
+   */
+  const bestOfflineAnswer = useCallback(
+    (query: string, semanticAnswer?: string | null): string | null => {
       if (isPageContextQuery(query)) {
         const pageAnswer = buildPageContextAnswer(query)
-        if (pageAnswer) {
-          addBotMessage(pageAnswer)
-          return
-        }
+        if (pageAnswer) return pageAnswer
       }
-      const answer = findFaqAnswer(query)
+      const faq = semanticAnswer ?? findFaqAnswer(query)
+      return faq ? trimFaqAnswer(faq) : null
+    },
+    [buildPageContextAnswer]
+  )
+
+  const respondWithFaq = useCallback(
+    (query: string) => {
+      const answer = bestOfflineAnswer(query)
       if (answer) {
-        addBotMessage(trimFaqAnswer(answer))
+        addBotMessage(answer)
       } else {
         addBotMessage(
           '該当するFAQが見つかりませんでした。以下のトピックをお試しください:\n\n' +
@@ -208,7 +222,7 @@ export const useChatMessage = ({
         )
       }
     },
-    [addBotMessage, buildPageContextAnswer]
+    [addBotMessage, bestOfflineAnswer]
   )
 
   /**
@@ -316,12 +330,13 @@ export const useChatMessage = ({
           config.apiKey,
           userText
         ).catch(() => [])
-        const semanticAnswer = findSemanticFaqAnswer(embeddingFaq)
-        const faqAnswer = semanticAnswer ?? findFaqAnswer(userText)
-        if (faqAnswer) {
-          addBotMessage(
-            `*AI接続エラー: ${errMsg}*\n\n---\n\nFAQから回答します:\n\n${trimFaqAnswer(faqAnswer)}`
-          )
+        // 失敗時も通常時と同じ優先順位（ページ説明 → FAQ）で返す
+        const offline = bestOfflineAnswer(
+          userText,
+          findSemanticFaqAnswer(embeddingFaq)
+        )
+        if (offline) {
+          addBotMessage(`*AI接続エラー: ${errMsg}*\n\n---\n\n${offline}`)
         } else {
           addBotMessage(`エラー: ${errMsg}`)
         }
