@@ -5,7 +5,7 @@
 import { alpha, Box, Fab, Paper, Slide, Zoom, useTheme } from '@mui/material'
 import { useCallback } from 'react'
 
-import { motionOf } from '@/theme/motion'
+import { motionOf } from './motion'
 
 import BookConciergeIcon from './BookConciergeIcon'
 import { isBackendMode } from './chatAiService'

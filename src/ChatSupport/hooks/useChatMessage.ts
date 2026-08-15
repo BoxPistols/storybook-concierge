@@ -127,12 +127,40 @@ export const useChatMessage = ({
     return keywords.some((kw) => q.toLowerCase().includes(kw))
   }
 
-  /** 現在のページに関する FAQ 回答を生成 */
+  /**
+   * 現在のページに関する回答を生成（AI 不要）
+   *
+   * storyGuideMap に該当エントリが無くても答えられるようにしてある。
+   * 別のプロジェクトへ持ち込んだ直後は当然 1 件も登録されておらず、
+   * そこで null を返すと看板機能の「この画面なに？」が丸ごと死ぬ。
+   * Decorator が渡す title / name / description だけでも成立させ、
+   * storyGuide があれば厚みが増す、という関係にする。
+   */
   const buildPageContextAnswer = useCallback(
     (query?: string): string | null => {
-      if (!currentStory || !storyGuide) return null
+      if (!currentStory) return null
       const q = query?.toLowerCase() || ''
       const isImplementation = q.includes('実装') || q.includes('コード')
+
+      // 登録が無い場合は Storybook 側のメタ情報だけで組み立てる
+      if (!storyGuide) {
+        const lines = [`**${currentStory.title}** > ${currentStory.name}`, '']
+        if (currentStory.description) {
+          lines.push(currentStory.description)
+        } else {
+          lines.push(
+            `${currentStory.title} の Story「${currentStory.name}」を表示しています。`
+          )
+        }
+        const argNames = Object.keys(currentStory.args ?? {})
+        if (argNames.length) {
+          lines.push(
+            '',
+            `**このページで触れる props:** ${argNames.slice(0, 12).join(', ')}`
+          )
+        }
+        return lines.join('\n')
+      }
 
       const lines = [
         `**${currentStory.title}** > ${currentStory.name}`,

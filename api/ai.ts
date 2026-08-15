@@ -9,7 +9,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, type ModelMessage } from 'ai'
 
 import { isAllowedOrigin, setCorsHeaders } from '../lib/cors.js'
-import { resolveMaxOutputTokens } from '../lib/maxOutputTokens.js'
+import { resolveMaxOutputTokens } from '../src/ChatSupport/maxOutputTokens.js'
 import {
   checkRateLimit,
   getClientIdentifier,

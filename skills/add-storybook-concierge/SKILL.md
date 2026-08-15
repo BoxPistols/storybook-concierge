@@ -52,10 +52,15 @@ npx degit BoxPistols/storybook-concierge/src/ChatSupport src/ChatSupport
 npx degit BoxPistols/storybook-concierge/lib lib-tmp && cp lib-tmp/maxOutputTokens.ts lib/ && rm -rf lib-tmp
 ```
 
-コピー後、import パスを確認する:
+`src/ChatSupport/` は**自己完結している**（ディレクトリ外への import が無い）。
+コピー先の階層をどこにしても import は壊れない。テーマへの依存も
+標準の MUI パレット（`primary.main` / `success.main` / `warning.main` /
+`divider` / `background.paper` / `mode`）だけなので、対象プロジェクトの
+ThemeProvider があればそのまま馴染む。
 
-- ChatSupport 内から `../../lib/maxOutputTokens` への相対 import → `lib/` をリポジトリルートに置いていれば解決する。階層が違うなら import を直す
-- `@/theme/...` 形式の import が残っていたら、対象プロジェクトの `@` エイリアス（tsconfig `paths` と vite `resolve.alias` の両方）を確認し、無ければ張るか、対象プロジェクトのテーマ import に書き換える
+バックエンド経由（`api/ai.ts`）も使う場合だけ、追加で `api/` と `lib/` をコピーする。
+`api/ai.ts` は `../src/ChatSupport/maxOutputTokens.js` を参照する（実装を 2 箇所に
+持たないため。過去に二重定義して片方だけ分岐が欠け、Gemini が空応答になった）。
 
 ## 3. .storybook/main への追記（丸ごと置換禁止）
 
@@ -117,15 +122,40 @@ return mergeConfig(config, {
 
 既存の decorators 配列・parameters は保持し、Decorator を**追加**する（ここも丸ごと置換しない）。
 
-## 5. storyGuideMap を対象プロジェクトに合わせる
+## 5. 知識ベースを対象プロジェクトに合わせる
 
-`src/ChatSupport/storyGuideMap.ts` の `STORY_GUIDE_MAP` はデモ用の内容なので、
-**対象プロジェクトの story 階層に合わせて書き直す**。
+**この手順を飛ばしても壊れない。** ページ文脈の回答は Decorator が渡す
+title / name / description だけでも成立する（storyGuideMap に該当が無い場合は
+Storybook のメタ情報から組み立てる）。以下は回答の厚みを増やす作業。
 
-- キーは story meta の `title`（例: `"Components/Button"`）。完全一致 → 前方一致の順で解決される
-- 各エントリは `summary` / `codeContext[]`（実ファイルパス・実際の値を書く）/ `references?` / `related?`
-- 全 story を網羅する必要はない。主要ページから書き、ヒットしない title は FAQ 一般応答に落ちるだけ
-- `faqDatabase.ts` の FAQ 内容も対象プロジェクト向けに見直す（デモの内容のままだと嘘を答える）
+### 5-1. storyGuideMap を自動生成する
+
+対象プロジェクトの Storybook から下書きを起こせる。
+
+```bash
+pnpm build-storybook
+node scripts/generate-story-guide.mjs > src/ChatSupport/storyGuideMap.generated.ts
+```
+
+`index.json` の title / story 名と、各 story ファイルの
+`parameters.docs.description.component`（**最初の段落**）から生成する。
+説明が書いてある story ほど良い下書きになる。生成物は下書きなので、
+重要なページから `codeContext` に実ファイルパス・実際の値を書き足す。
+
+生成した map を使うには `storyGuideMap.ts` の `STORY_GUIDE_MAP` を
+生成物で置き換えるか、両方を spread でマージする。
+
+### 5-2. FAQ を差し替える
+
+`faqDatabase.ts` は 2 つの配列に分かれている。
+
+| 配列          | 扱い                                              |
+| ------------- | ------------------------------------------------- |
+| `CHAT_FAQ`    | チャット操作と Storybook 一般。**そのまま使える** |
+| `PROJECT_FAQ` | このデモ固有。**丸ごと差し替える**                |
+
+`PROJECT_FAQ` を残したまま持ち込むと、存在しない Story や別プロジェクトの
+構成を自信満々に答える。空配列にするだけでも良い（`CHAT_FAQ` だけで動く）。
 
 ## 6. 検証ゲート（全部通して完了。1 つでも欠けたら未完了）
 

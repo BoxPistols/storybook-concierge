@@ -18,6 +18,38 @@ pnpm storybook   # http://localhost:6206
 
 これだけで動きます。**API キーは不要**です。キーが無い場合、Concierge は内蔵 FAQ とページガイドで応答します（「この画面は何？」のようなページ文脈の質問にも答えます）。
 
+## 他プロジェクトへの導入
+
+`src/ChatSupport/` は**自己完結している**（ディレクトリ外への import が無い）。
+コピーして Decorator を配線すれば、**知識ベースを 1 行も書かなくても
+そのプロジェクトのページについて答える**。
+
+Storybook が既に持っているメタ情報（story の title / name /
+`parameters.docs.description.component` / 現在の args）を Decorator が実行時に渡すため。
+
+```
+storyGuideMap 登録ゼロの状態で「この画面なに？」と聞いた実際の応答:
+
+  Controls パネルで variant / color / size を変更して、見た目の変化を…
+  - variant — text（最も控えめ）/ outlined（枠線）/ contained（塗りつぶし）
+  …
+  このページで触れる props: variant, color, size, disabled, children
+```
+
+より深い回答が要るページは、Storybook から下書きを生成して足す。
+
+```bash
+pnpm build-storybook
+pnpm generate:story-guide > src/ChatSupport/storyGuideMap.generated.ts
+```
+
+FAQ は `CHAT_FAQ`（チャット操作・Storybook 一般。そのまま使える）と
+`PROJECT_FAQ`（このデモ固有。差し替える）に分かれている。
+
+手順の全体と検証ゲートは `skills/add-storybook-concierge/SKILL.md` にある。
+Claude Code なら、このスキルを `~/.claude/skills/` か対象プロジェクトの
+`.claude/skills/` に置けばそのまま実行できる。
+
 ## API キーを使う場合
 
 自由質問に AI で答えさせたい場合は、`.env.example` を `.env` にコピーしてキーを設定します。

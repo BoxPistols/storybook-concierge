@@ -22,7 +22,8 @@
     "test:run": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify:render": "node scripts/verify-render.mjs"
+    "verify:render": "node scripts/verify-render.mjs",
+    "generate:story-guide": "node scripts/generate-story-guide.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.104",

@@ -15,7 +15,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, type ModelMessage } from 'ai'
 
-import { resolveMaxOutputTokens } from '../../lib/maxOutputTokens'
+import { resolveMaxOutputTokens } from './maxOutputTokens'
 
 import type { ChatSupportConfig } from './chatSupportTypes'
 
