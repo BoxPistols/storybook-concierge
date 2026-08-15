@@ -1,0 +1,21 @@
+<style>
+  /*
+    Docs ページの story ブロックを横幅いっぱいにする。
+
+    Storybook は .docs-story を display:flex にする。その直下の div が
+    フレックス項目として内容幅まで縮み、その中の .sb-story も連動して縮む。
+    preview.tsx の Decorator がテーマの地色を塗っているため、縮んだままだと
+    「部品の幅ぶんだけ色が付いた細い帯」になり、light / dark を切り替えた
+    ときの見え方が破綻する。
+
+    .sb-story だけに width:100% を当てても効かない（親が既に縮んでいるため
+    100% が縮んだ幅の 100% になる。実測 117.6px）。フレックス項目である
+    .docs-story 直下から広げる必要がある。
+
+    Canvas 側（layout: fullscreen）には影響しない。
+  */
+  .docs-story > div,
+  .sb-story {
+    width: 100%;
+  }
+</style>

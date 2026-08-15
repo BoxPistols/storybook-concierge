@@ -52,14 +52,18 @@ const Decorator = (Story: StoryFn, context: StoryContext) => {
 
   return (
     <ThemeProvider theme={theme}>
-      {/* CssBaseline が body の背景をテーマ側に合わせる。
-          これが無いと Storybook の白いキャンバスに暗いコンポーネントが乗り、
-          「dark にしたのに地が白い」状態になる */}
       <CssBaseline />
+      {/* 部品は自分のテーマの面の上に置く。Storybook の chrome（サイドバー・
+          Docs）は dark 固定なので、light を選んだときに部品だけ明るい面に
+          乗るのが正しい見え方になる。
+
+          width:100% が要る: Docs の .docs-story は display:flex で、
+          幅指定の無い子は内容幅まで縮む。これを忘れると背景が
+          幅 118px の縦帯として描かれる（実測して判明） */}
       <div
         style={{
+          width: '100%',
           padding: '1rem',
-          minHeight: '100vh',
           backgroundColor: theme.palette.background.default,
           color: theme.palette.text.primary,
         }}>
@@ -114,13 +118,11 @@ const preview: Preview = {
       // ここを忘れると Docs タブだけ白いままになる
       theme: sbDark,
     },
-    // Canvas の地。テーマと合わせないと暗い部品が白地に乗る
-    backgrounds: {
-      options: {
-        dark: { name: 'dark', value: '#18181b' },
-        light: { name: 'light', value: '#f8fafc' },
-      },
-    },
+    // 背景アドオンは無効にする。
+    // テーマ切替と背景切替の 2 つがツールバーに並ぶと、片方だけ変えたときに
+    // 「暗いテーマなのに地が明るい」状態を作れてしまう。
+    // 地の色は CssBaseline がテーマから塗るので、切替口は Theme 一つでよい
+    backgrounds: { disable: true },
   },
 
   decorators: [Decorator],
