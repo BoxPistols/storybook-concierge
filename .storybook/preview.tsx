@@ -3,13 +3,40 @@ import { ThemeProvider } from '@mui/material/styles'
 import { useMemo, useRef } from 'react'
 
 import { ChatSupport } from '@/ChatSupport'
+import { DocsContainer } from '@storybook/addon-docs/blocks'
 import { themes as sbThemes } from 'storybook/theming'
 
 import { DEFAULT_THEME_MODE, themes, type ThemeMode } from '@/theme/theme'
 
 import type { Preview, StoryFn, StoryContext } from '@storybook/react-vite'
 
-const sbDark = sbThemes.dark
+/**
+ * Docs ページの枠をテーマに追従させるコンテナ。
+ *
+ * parameters.docs.theme は静的なので、globals では切り替わらない。
+ * DocsContainer を包んで、現在の globals から SB のテーマを選ぶ
+ */
+const DocsContainerWithTheme = ({
+  context,
+  children,
+}: {
+  context: React.ComponentProps<typeof DocsContainer>['context']
+  children: React.ReactNode
+}) => {
+  const mode =
+    (
+      context as unknown as {
+        store?: { userGlobals?: { globals?: Record<string, unknown> } }
+      }
+    ).store?.userGlobals?.globals?.theme ?? DEFAULT_THEME_MODE
+  return (
+    <DocsContainer
+      context={context}
+      theme={mode === 'light' ? sbThemes.light : sbThemes.dark}>
+      {children}
+    </DocsContainer>
+  )
+}
 
 /**
  * 全 Story に Concierge (ChatSupport) を注入する Decorator。
@@ -114,9 +141,9 @@ const preview: Preview = {
     docs: {
       toc: { headingSelector: 'h2, h3' },
       autodocs: true,
-      // Docs ページ（Storybook が描く枠）も暗くする。
-      // ここを忘れると Docs タブだけ白いままになる
-      theme: sbDark,
+      // Docs ページ（Storybook が描く枠）もテーマに追従させる。
+      // 固定にすると light を選んだとき「暗い枠に暗い文字」になる
+      container: DocsContainerWithTheme,
     },
     // 背景アドオンは無効にする。
     // テーマ切替と背景切替の 2 つがツールバーに並ぶと、片方だけ変えたときに
