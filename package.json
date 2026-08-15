@@ -1,0 +1,65 @@
+{
+  "name": "storybook-concierge",
+  "version": "0.1.0",
+  "private": false,
+  "description": "An AI concierge chat widget that lives inside Storybook and answers questions about the story on screen",
+  "keywords": [
+    "storybook",
+    "react",
+    "mui",
+    "ai",
+    "chat",
+    "design-system"
+  ],
+  "license": "MIT",
+  "author": "BoxPistols",
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6206",
+    "build-storybook": "storybook build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify:render": "node scripts/verify-render.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.104",
+    "@ai-sdk/openai": "^3.0.91",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.11",
+    "@mui/material": "^7.2.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.2",
+    "ai": "^6.0.246",
+    "dayjs": "^1.11.21",
+    "fuse.js": "^7.5.0",
+    "lucide-react": "^0.577.0",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "^10.5.7",
+    "@storybook/react": "^10.5.7",
+    "@storybook/react-vite": "^10.5.7",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "playwright": "^1.62.1",
+    "prettier": "^3.9.6",
+    "storybook": "^10.5.7",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vitest": "^1.6.1"
+  },
+  "packageManager": "pnpm@10.2.1",
+  "volta": {
+    "node": "22.14.0"
+  }
+}
