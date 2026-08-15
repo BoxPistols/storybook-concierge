@@ -9,6 +9,19 @@ Storybook の全 story に常駐する AI チャット「Concierge」のリフ�
 - キーを入れると AI（OpenAI / Gemini, AI SDK v6）+ Embedding によるセマンティック検索で自由質問に対応
 - 公開デプロイ前提の設計: **共有キーをバンドルに焼き込まない**（本番ビルドで機械的に除去 + バックエンドプロキシ + レート制限）
 
+## デモ
+
+https://storybook-concierge.vercel.app
+
+**API キー無しで動きます。** 右下のボタンからチャットを開き、「この画面なに？」と聞いてみてください。
+いま開いている Story を前提に答えます。
+
+![ページ文脈の回答](docs/images/02-page-context.png)
+
+Docs ページ（dark が既定。ツールバーの Theme で light に切り替えられます）:
+
+![Docs ページ](docs/images/01-docs.png)
+
 ## デモの動かし方
 
 ```bash
