@@ -8,7 +8,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, type ModelMessage } from 'ai'
 
-import { isAllowedOrigin, setCorsHeaders } from '../lib/cors.js'
+import { isAllowedOrigin, requestHost, setCorsHeaders } from '../lib/cors.js'
 import { resolveMaxOutputTokens } from '../src/ChatSupport/maxOutputTokens.js'
 import {
   checkRateLimit,
@@ -97,7 +97,9 @@ const headerToString = (
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const origin = headerToString(req.headers.origin)
-  setCorsHeaders(res, origin)
+  // 自分自身のホスト。同一オリジンからの呼び出しを設定なしで通すために使う
+  const selfHost = requestHost(req.headers)
+  setCorsHeaders(res, origin, selfHost)
 
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -111,7 +113,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Origin allowlist チェック（本番のみ）
-  if (process.env.NODE_ENV === 'production' && !isAllowedOrigin(origin)) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !isAllowedOrigin(origin, selfHost)
+  ) {
     res.status(403).json({ error: 'Origin not allowed', code: 'ORIGIN_DENIED' })
     return
   }
