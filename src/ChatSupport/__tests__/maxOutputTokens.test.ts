@@ -17,7 +17,7 @@ describe('resolveMaxOutputTokens', () => {
 
     it('接続テストでも Gemini 2.5 は buffer を確保する', () => {
       const gemini = resolveMaxOutputTokens('gemini-2.5-pro', { isTest: true })
-      const other = resolveMaxOutputTokens('gpt-5.6-luna', { isTest: true })
+      const other = resolveMaxOutputTokens('gpt-6-luna', { isTest: true })
       expect(gemini).toBeGreaterThan(GEMINI_REASONING_BUFFER)
       expect(other).toBeLessThan(GEMINI_REASONING_BUFFER)
     })
@@ -56,18 +56,22 @@ describe('resolveMaxOutputTokens', () => {
   })
 
   describe('モデル別の既定値', () => {
-    it('reasoning 系（gpt-5 / o1 / o3）は既定より大きい', () => {
+    it('reasoning系（gpt-5 / gpt-6 / o1 / o3）は既定より大きい', () => {
       const base = resolveMaxOutputTokens('gpt-4o')
-      for (const model of ['gpt-5.6', 'o1-preview', 'o3-mini']) {
+      for (const model of ['gpt-5.6', 'gpt-6', 'o1-preview', 'o3-mini']) {
         expect(resolveMaxOutputTokens(model)).toBeGreaterThan(base)
       }
     })
 
-    it('コスト最適枠（nano / luna）は reasoning 系の拡大を受けない', () => {
+    it('コスト最適枠（nano）はreasoning系の拡大を受けない', () => {
       const base = resolveMaxOutputTokens('gpt-4o')
-      // gpt-5.6-luna は gpt-5 にも一致するが、luna 判定が先に効く
-      expect(resolveMaxOutputTokens('gpt-5.6-luna')).toBe(base)
       expect(resolveMaxOutputTokens('gpt-5-nano')).toBe(base)
+    })
+
+    it('gpt-6-lunaはreasoning系として拡大される', () => {
+      // 上限を絞ると推論トークンが食い切って可視出力が空になる
+      const base = resolveMaxOutputTokens('gpt-4o')
+      expect(resolveMaxOutputTokens('gpt-6-luna')).toBeGreaterThan(base)
     })
   })
 })
