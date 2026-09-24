@@ -28,6 +28,7 @@ import {
   semanticSearch,
 } from '../embeddingSearch'
 import { FAQ_DATABASE, findFaqAnswer, INITIAL_GREETING } from '../faqDatabase'
+import { pickFaqWithAi } from '../faqPick'
 import { findStoryGuide } from '../storyGuideMap'
 
 import type {
@@ -220,9 +221,37 @@ export const useChatMessage = ({
     [buildPageContextAnswer]
   )
 
+  /**
+   * FAQ を選ぶ。まずサーバー側の型付き判定に聞き、選べなかったときだけ
+   * 既存のキーワード検索に落とす。
+   *
+   * 実測（2026-09-20）: 言い換えた質問20件で、キーワード検索は12件正解、
+   * 型付き判定は19件正解。FAQ に無い質問10件に対して、キーワード検索は
+   * 1件に誤って答え、型付き判定は0件だった。詳細は docs/faq-pick-ai.md。
+   * 判定の口が無い環境（キー未設定・通信失敗）では今までどおり動く。
+   */
+  const pickFaqAnswer = useCallback(
+    async (query: string): Promise<string | null> => {
+      const picked = await pickFaqWithAi(query)
+      if (picked && picked.index !== null) {
+        return FAQ_DATABASE[picked.index]?.answer ?? null
+      }
+      return findFaqAnswer(query)
+    },
+    []
+  )
+
   const respondWithFaq = useCallback(
-    (query: string) => {
-      const answer = bestOfflineAnswer(query)
+    async (query: string) => {
+      if (isPageContextQuery(query)) {
+        const pageAnswer = buildPageContextAnswer(query)
+        if (pageAnswer) {
+          addBotMessage(pageAnswer)
+          return
+        }
+      }
+      const faq = await pickFaqAnswer(query)
+      const answer = faq ? trimFaqAnswer(faq) : null
       if (answer) {
         addBotMessage(answer)
       } else {
@@ -233,7 +262,7 @@ export const useChatMessage = ({
         )
       }
     },
-    [addBotMessage, bestOfflineAnswer]
+    [addBotMessage, buildPageContextAnswer, pickFaqAnswer]
   )
 
   /**
