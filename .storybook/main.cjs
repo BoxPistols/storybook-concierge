@@ -27,6 +27,8 @@ const fileUrlResolvePlugin = {
 const config = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-docs'],
+  // OGP 画像など、ビルド出力の直下にそのまま置きたいファイル
+  staticDirs: ['../public'],
   framework: {
     name: '@storybook/react-vite',
     options: {},
