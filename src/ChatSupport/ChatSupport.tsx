@@ -286,8 +286,13 @@ export const ChatSupport = ({
                 right: 0,
                 width: { xs: 'calc(100vw - 48px)', sm: widgetSize.width },
                 height: widgetSize.height,
-                minWidth: 320,
-                minHeight: 400,
+                // FAB の箱は bottom:24 に固定され、パネルはそこから上へ伸びる。
+                // 高さが画面を超えると上端（ヘッダーと閉じるボタン）が画面外に
+                // 出て操作できなくなるので、上下 24px を残して頭打ちにする。
+                // min-* は max-* より優先されるため、min 側も画面に合わせて縮める
+                maxHeight: 'calc(100dvh - 48px)',
+                minWidth: 'min(320px, calc(100vw - 48px))',
+                minHeight: 'min(400px, calc(100dvh - 48px))',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
