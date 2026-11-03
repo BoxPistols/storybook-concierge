@@ -1,26 +1,32 @@
 # storybook-concierge
 
-> **TL;DR (English):** A reference implementation of "Concierge" — an AI chat widget that lives on every Storybook story and answers questions about the component currently on screen. Works out of the box with a built-in FAQ (no API key required); plug in an OpenAI / Gemini key for free-form AI answers. Ships with a backend-proxy design so shared builds never contain credentials. MIT licensed.
+Storybook の全 story に常駐し、**いま画面に出ている部品について質問に答える AI チャット**。デザインシステムを使う実装者が、ドキュメントを探しに行かずにその場で聞けるようにするためのリファレンス実装です。
 
-Storybook の全 story に常駐する AI チャット「Concierge」のリファレンス実装です。
-画面右下の FAB からチャットを開くと、**いま表示している story の文脈**（title / name / description / argTypes / args）を踏まえて質問に答えます。
+**デモ: https://storybook-concierge.vercel.app/?path=/story/guide-start-here--start-here** （API キー不要。開くと右下でチャットが開いています）
 
-- **API キー無しでも動く**: 内蔵 FAQ + ページガイド（storyGuideMap）で応答
-- キーを入れると AI（OpenAI / Gemini, AI SDK v6）+ Embedding によるセマンティック検索で自由質問に対応
-- 公開デプロイ前提の設計: **共有キーをバンドルに焼き込まない**（本番ビルドで機械的に除去 + バックエンドプロキシ + レート制限）
+[![License: MIT](https://img.shields.io/github/license/BoxPistols/storybook-concierge)](./LICENSE)
 
-## デモ
+![Start here ページで「この画面なに？」に答えているチャット](docs/images/00-start-here.png)
 
-https://storybook-concierge.vercel.app
+> **TL;DR (English):** An AI chat widget that lives on every Storybook story and answers questions about the component on screen, using the story's title / description / argTypes / args as context. Without an API key it answers from a built-in FAQ (fuzzy search) and a per-page guide; with an OpenAI key it uses the LLM plus embedding-based semantic search. Shared builds never contain credentials (backend proxy + rate limit). MIT licensed.
 
-**API キー無しで動きます。** 右下のボタンからチャットを開き、「この画面なに？」と聞いてみてください。
-いま開いている Story を前提に答えます。
+## 見どころ
+
+- **story の文脈をそのまま渡す**: Decorator が全 story に注入し、title / description / argTypes / args を実行時に渡す。知識ベースを書かなくても、そのページについて答える — [.storybook/preview.tsx](./.storybook/preview.tsx)
+- **キーなしでも動く 2 段構え**: キーなしでは FAQ とページガイドの曖昧検索で回答、キーありで OpenAI と Embedding による意味検索。AI 呼び出しが失敗しても FAQ に戻る — [src/ChatSupport/hooks/useChatMessage.ts](./src/ChatSupport/hooks/useChatMessage.ts)
+- **公開ビルドにキーを焼き込まない**: 本番ビルドでは資格情報の define を機械的に空にし、`/api/ai` のプロキシと IP ごとの日次上限で守る — [.storybook/main.cjs](./.storybook/main.cjs) / [api/ai.ts](./api/ai.ts) / [lib/ratelimit.ts](./lib/ratelimit.ts)
+
+## 試し方（デモ）
+
+1. デモを開く（右下のチャットが開いた状態で始まります。閉じていたら右下の丸いボタンか Cmd/Ctrl + Shift + K）
+2. 「この画面なに？」と送る。いま開いている story を前提に答えます
+3. サイドバーの Components > Button に移り、Controls で variant を変えてから「今の variant は？」と聞く
+
+デモはサーバー側に AI キーを置いていないため、ローカルの知識ベースで答えます。チャットの設定（歯車）に自分の OpenAI キーを入れると AI 回答に切り替わります。
+
+ページ文脈の回答（Button）:
 
 ![ページ文脈の回答](docs/images/02-page-context.png)
-
-Docs ページ（dark が既定。ツールバーの Theme で light に切り替えられます）:
-
-![Docs ページ](docs/images/01-docs.png)
 
 ## デモの動かし方
 
@@ -29,7 +35,11 @@ pnpm install
 pnpm storybook   # http://localhost:6206
 ```
 
-これだけで動きます。**API キーは不要**です。キーが無い場合、Concierge は内蔵 FAQ とページガイドで応答します（「この画面は何？」のようなページ文脈の質問にも答えます）。
+これだけで動きます。**API キーは不要**です。キーが無い場合、Concierge は FAQ とページガイドの曖昧検索で応答します（「この画面は何？」のようなページ文脈の質問にも答えます）。
+
+Docs ページ（dark が既定。ツールバーの Theme で light に切り替えられます）:
+
+![Docs ページ](docs/images/01-docs.png)
 
 ## テーマ
 
@@ -122,7 +132,7 @@ flowchart TD
     D -->|"到達"| F
     D -->|"残あり"| E["semanticSearch<br/>(Embedding インデックス)"]
     E --> G["callAI (chatAiService)"]
-    G -->|"開発: Direct Mode"| H["OpenAI / Gemini<br/>ブラウザから直接"]
+    G -->|"開発: Direct Mode"| H["OpenAI<br/>ブラウザから直接"]
     G -->|"本番: Backend Mode"| I["/api/ai (api/ai.ts)<br/>サーバープロキシ + レート制限"]
     G -->|"AI 接続エラー"| F
 ```
@@ -137,17 +147,23 @@ flowchart TD
 storybook-concierge/
 ├── .storybook/
 │   ├── main.cjs             # Storybook 設定（esnext / destructuring 対策、本番でのキー除去）
-│   └── preview.tsx          # Decorator（全 story への Concierge 注入）
+│   ├── manager.ts           # chrome のテーマ・ブランド名、入口 story のレイアウト
+│   ├── manager-head.html    # OGP / meta description
+│   └── preview.tsx          # Decorator（全 story への Concierge 注入）、story の並び順
 ├── src/
 │   ├── ChatSupport/         # Concierge 本体（FAB + チャット UI + AI/FAQ ロジック）
-│   ├── stories/             # デモ用 story
+│   │   └── maxOutputTokens.ts  # モデル別 maxOutputTokens の単一ソース（ブラウザ/サーバー共用）
+│   ├── stories/             # デモ用 story（Guide/Start here が入口）
 │   └── theme/               # MUI テーマ / モーショントークン
 ├── lib/
-│   ├── maxOutputTokens.ts   # モデル別 maxOutputTokens の単一ソース（ブラウザ/サーバー共用）
 │   ├── cors.ts              # Origin 許可リスト
 │   └── ratelimit.ts         # 日次レート制限（Upstash Redis / in-memory）
 ├── api/
 │   └── ai.ts                # バックエンドプロキシ（Vercel Function）
+├── public/
+│   └── og-image.png         # OGP 画像（1200x630、Start here の実画面）
+├── scripts/
+│   └── finalize-static-html.mjs  # ビルド後に index.html を lang="ja" と固定タイトルへ
 ├── skills/
 │   └── add-storybook-concierge/
 │       └── SKILL.md         # 既存 Storybook への組み込み手順（Claude Code 用）
@@ -157,10 +173,6 @@ storybook-concierge/
 ## 既存の Storybook に組み込む
 
 Claude Code が実行できる再現手順を [skills/add-storybook-concierge/SKILL.md](./skills/add-storybook-concierge/SKILL.md) に置いています。手で組み込む場合も、同ファイルの手順と検証ゲートをそのまま使えます。
-
-## 解説記事
-
-解説記事: 準備中
 
 ## License
 
