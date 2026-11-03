@@ -16,7 +16,7 @@
   "type": "module",
   "scripts": {
     "storybook": "storybook dev -p 6206",
-    "build-storybook": "storybook build",
+    "build-storybook": "storybook build && node scripts/finalize-static-html.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",

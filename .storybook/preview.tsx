@@ -76,6 +76,12 @@ const Decorator = (Story: StoryFn, context: StoryContext) => {
   )
 
   const disableDecoratorChat = context.parameters?.disableDecoratorChat === true
+  // 入口の story では最初からチャットを開いておく。狭い画面では本文を
+  // 覆ってしまうので、パネルと本文が並ぶ幅のときだけ開く
+  const defaultOpen =
+    context.parameters?.concierge?.defaultOpen === true &&
+    typeof window !== 'undefined' &&
+    window.matchMedia('(min-width: 900px)').matches
 
   return (
     <ThemeProvider theme={theme}>
@@ -97,7 +103,7 @@ const Decorator = (Story: StoryFn, context: StoryContext) => {
         <Story {...context} />
       </div>
       {context.viewMode !== 'docs' && !disableDecoratorChat && (
-        <ChatSupport currentStory={currentStory} />
+        <ChatSupport currentStory={currentStory} defaultOpen={defaultOpen} />
       )}
     </ThemeProvider>
   )
@@ -132,6 +138,19 @@ const preview: Preview = {
 
   parameters: {
     layout: 'fullscreen',
+    // 素の URL で開いたときに最初に選ばれるのは並びの先頭。既定のアルファベット順
+    // だと Components/Alert の Docs（チャットを注入しない）が先頭になり、
+    // 初見の人はチャットの存在に気づけない。入口の story を先頭に固定する
+    options: {
+      storySort: {
+        order: [
+          'Guide',
+          ['Start here', 'Getting Started'],
+          'Components',
+          'Tokens',
+        ],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

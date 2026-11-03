@@ -45,6 +45,9 @@ export const ChatMessageList = ({
       data-testid='concierge-messages'
       sx={{
         flexGrow: 1,
+        // flex 子の min-height は既定で内容の高さになり、履歴が伸びると
+        // パネルの外へはみ出す。0 にして、縮むのも履歴欄の中だけにする
+        minHeight: 0,
         px: 1.5,
         py: 1.5,
         overflowY: 'auto',

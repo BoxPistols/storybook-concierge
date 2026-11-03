@@ -72,8 +72,11 @@ await page.goto(`${URL}/iframe.html?id=${target.id}&viewMode=story`, {
   timeout: 20000,
 })
 await page.waitForTimeout(900)
-await page.click('.MuiFab-root')
-await page.waitForTimeout(600)
+// 入口の story（Guide/Start here）は広い画面で最初からチャットが開いている
+if (!(await page.getByTestId('concierge-panel').isVisible())) {
+  await page.click('.MuiFab-root')
+  await page.waitForTimeout(600)
+}
 // MUI の multiline TextField は採寸用の隠し textarea を併置する
 // （aria-hidden + readonly + height 0）。それを掴むと fill が永久に待つ
 const input = page
