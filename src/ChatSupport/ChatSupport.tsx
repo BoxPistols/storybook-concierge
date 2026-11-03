@@ -26,7 +26,10 @@ import type { CurrentStoryContext, ChatSupportProps } from './chatSupportTypes'
 // 後方互換のための re-export
 export type { CurrentStoryContext }
 
-export const ChatSupport = ({ currentStory }: ChatSupportProps) => {
+export const ChatSupport = ({
+  currentStory,
+  defaultOpen = false,
+}: ChatSupportProps) => {
   const theme = useTheme()
 
   // --- 状態 hooks ---
@@ -43,7 +46,7 @@ export const ChatSupport = ({ currentStory }: ChatSupportProps) => {
     setConfirmClearOpen,
     clearChat,
     executeClearChat,
-  } = useChatState()
+  } = useChatState(defaultOpen)
 
   const {
     config,

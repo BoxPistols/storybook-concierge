@@ -11,12 +11,13 @@ import { INITIAL_GREETING } from '../faqDatabase'
 
 import type { Message } from '../chatSupportTypes'
 
-export const useChatState = () => {
+export const useChatState = (defaultOpen = false) => {
   const [isOpen, setIsOpenRaw] = useState(() => {
     try {
-      return sessionStorage.getItem('chat_support_open') === '1'
+      const saved = sessionStorage.getItem('chat_support_open')
+      return saved === null ? defaultOpen : saved === '1'
     } catch {
-      return false
+      return defaultOpen
     }
   })
 

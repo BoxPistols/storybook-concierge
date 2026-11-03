@@ -25,6 +25,18 @@ export interface StoryGuideEntry {
  */
 export const STORY_GUIDE_MAP: Record<string, StoryGuideEntry> = {
   // --- Guide ---
+  'Guide/Start here': {
+    summary:
+      '最初に開くページ。チャットで試すことを 3 つに絞って示す。この story だけチャットが開いた状態で始まる。',
+    codeContext: [
+      '試すこと: 1)「この画面なに？」と聞く 2) Components > Button に移って同じ質問をする 3) 設定から OpenAI キーを入れる',
+      '開いた状態で始まる仕組み: story の parameters.concierge.defaultOpen を .storybook/preview.tsx の Decorator が読み、画面幅 900px 以上のときだけ ChatSupport の defaultOpen に渡す',
+      '一度開閉すると sessionStorage の値が優先されるので、閉じたら閉じたまま',
+      'キーなし: FAQ（fuse.js の曖昧検索）とページガイド（storyGuideMap）で回答。キーあり: OpenAI と Embedding による意味検索で回答',
+    ],
+    references: ['https://storybook.js.org/docs'],
+    related: ['Guide/Getting Started', 'Components/Button'],
+  },
   'Guide/Getting Started': {
     summary:
       'このデモの入口。Concierge（AIチャット）の使い方とStorybookの基本操作を説明する。',

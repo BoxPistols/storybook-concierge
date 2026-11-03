@@ -31,6 +31,11 @@ export interface CurrentStoryContext {
 export interface ChatSupportProps {
   /** 現在表示中のストーリー情報 */
   currentStory?: CurrentStoryContext
+  /**
+   * 利用者がまだ開閉を選んでいないときに開いた状態で始めるか。
+   * 一度開閉すると sessionStorage の値が優先される
+   */
+  defaultOpen?: boolean
 }
 
 export type ShortcutActionId =
