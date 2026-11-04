@@ -39,6 +39,10 @@ const shared = {
     MuiCssBaseline: {
       styleOverrides: {
         html: { fontSize: HTML_FONT_SIZE },
+        body: {
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
+        },
         ...reducedMotionOverrides,
       },
     },
